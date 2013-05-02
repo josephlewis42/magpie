@@ -29,6 +29,7 @@
 *.sqlite
 uploads
 *~
+config.json
 
 # OS generated files #
 ######################
