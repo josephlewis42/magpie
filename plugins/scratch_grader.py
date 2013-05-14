@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '''
 
 import tempfile
+import io
+import json
 
 from magpie.plugins.abstract_plugin import AbstractPlugin
 import magpie.tap
@@ -44,61 +46,32 @@ except ImportError:
 	kurt = None
 
 
-class ScratchGrader(AbstractPlugin):
-	''' The plugin that is set to handle all information coming in and going
-	from this system.
-	
-	'''
-	
-	def __init__(self):
-		AbstractPlugin.__init__(self, "Scratch Grader", "Joseph Lewis <joehms22@gmail.com>", 0.1, "BSD 3 Clause")
-	
-	def process_upload(self, upload):
-		'''Called when an upload has been input in to the program.
-		
-		Returns a dictionary with pairs corresponding to:
-		{testname, TAPInstance}
-		
-		This software will parse 
-		http://podwiki.hexten.net/TAP/TAP.html?page=TAP
-		
-		'''
-		if kurt == None:
-			test = magpie.tap.TestAnythingProtocol("Scratch Grader Configuration")
-			test.fail("kurt is not installed", todo="Install Kurt" )
-		
-		print("Processing upload");
-		tests = []
-		for path in upload.items():
-			print("Got file")
-			if path.endswith(".sb"):
-				print("Got scratch file")
-				scratch = to_dict(kurt.ScratchProjectFile(path))
-				
-				test = magpie.tap.TestAnythingProtocol("Assignment 2 Checks")
-				test.assert_true(scratch['num_scripts'] > 2, "You have at least 3 scripts.", "You need at least 3 scripts.")
-				
-				numsounds = sum([len(sprite['sounds']) for sprite in scratch['sprites']]) + len(scratch['stage']['sounds'])
-				
-				test.assert_true(numsounds >= 1, "You a {} sounds.".format(numsounds), "You need at least one sound")
-				import pprint
-				pp = pprint.PrettyPrinter(indent=4)
-				pp.pprint(scratch)
-				
-				tests.append(test)
-		
-		return tests
-
-import io
-import json
-
 def count_scripts(scratch):
 	''' Counts the number of scripts in a project. '''
 	count = len(scratch.stage.scripts)
-	for sprite in scratch.stage.sprites:
+	for sprite in scratch.sprites:
 		count += len(sprite.scripts)
 	
 	return count 
+
+def count_costumes(scratch):
+	ct = 0
+	for sprite in scratch.sprites:
+		ct += len(sprite.costumes)
+	return ct
+
+def count_sounds(scratch):
+	count = len(scratch.stage.sounds)
+	return count + sum([len(x.sounds) for x in scratch.sprites])
+
+def count_sprites(scratch):
+	return len(scratch.sprites)
+
+def count_backgrounds(scratch):
+	return len(scratch.stage.backgrounds)
+
+def count_blocks(scratch):
+	return sum([len(s) for s in scratch.stage.scripts]) + sum([sum([len(s) for s in x.scripts]) for x in scratch.sprites])
 
 def count_accessible_scripts(scratch):
 	counter = 0
@@ -112,68 +85,103 @@ def count_accessible_scripts(scratch):
 	
 	return counter
 
-recurse_dict = True
-def to_dict(item, deepcopy=True):
-	''' Converts a scratch project to a Python dictionary. '''
-	CLASSNAME = str(item.__class__)
+def count_variables(scratch):
+	return len(scratch.stage.variables) + sum([len(x.variables) for x in scratch.sprites])
+
+def count_lists(scratch):
+	return len(scratch.stage.lists) + sum([len(x.lists) for x in scratch.sprites])
+
+# lines for telling the user what the results were
+MIN_PASS_LINE = "You have over {{n}} {obj}!"
+MIN_FAIL_LINE = "You have fewer than {{n}} {obj}"
+
+
+MIN_SCRIPTS = lambda scratch, n: count_scripts(scratch) >= n
+MIN_SOUNDS	= lambda scratch, n: count_sounds(scratch) >= n
+MIN_SPRITES	= lambda scratch, n: count_sprites(scratch) >= n
+MIN_BGRDS	= lambda scratch, n: count_backgrounds(scratch) >= n
+MIN_COSTUMES= lambda scratch, n: count_costumes(scratch) >= n
+MIN_BLOCKS	= lambda scratch, n: count_blocks(scratch) >= n
+MIN_VARIABLES = lambda scratch, n: count_variables(scratch) >= n
+MIN_LISTS = lambda scratch, n: count_lists(scratch) >= n
+
+# user-configurable functions for the results, in the format:
+# JSON_NAME, default value, evaluation function, if true, if false
+SCRATCH_FUNCTIONS = [
+('Minimum Scripts', 3, MIN_SCRIPTS, MIN_PASS_LINE.format(obj="scripts"), MIN_FAIL_LINE.format(obj="scripts")),
+('Minimum Sounds', 3, MIN_SOUNDS, MIN_PASS_LINE.format(obj="sounds"), MIN_FAIL_LINE.format(obj="sounds")),
+('Minimum Sprites', 3, MIN_SPRITES, MIN_PASS_LINE.format(obj="sprites"), MIN_FAIL_LINE.format(obj="sprites")),
+('Minimum Backgrounds', 3, MIN_BGRDS, MIN_PASS_LINE.format(obj="backgrounds"), MIN_FAIL_LINE.format(obj="backgrounds")),
+('Minimum Costumes', 1, MIN_COSTUMES, MIN_PASS_LINE.format(obj="costumes"), MIN_FAIL_LINE.format(obj="costumes")),
+('Minimum Blocks', 3, MIN_BLOCKS, MIN_PASS_LINE.format(obj="blocks"), MIN_FAIL_LINE.format(obj="blocks")),
+('Minimum Variables', 0, MIN_VARIABLES, MIN_PASS_LINE.format(obj="variables"), MIN_FAIL_LINE.format(obj="variables")),
+('Minimum Lists', 0, MIN_LISTS, MIN_PASS_LINE.format(obj="lists"), MIN_FAIL_LINE.format(obj="lists"))
+]
+
+
+class ScratchGrader(AbstractPlugin):
+	''' The plugin that is set to handle all information coming in and going
+	from this system.
 	
-	# Top Level of the project, return a python dict
-	if "kurt.files.ScratchProjectFile" in CLASSNAME:
-		return {'name':to_dict(item.name), 
-				'info':to_dict(item.info),
-				'sprites':to_dict(item.sprites), 
-				'stage':to_dict(item.stage),
-				'num_scripts':count_scripts(item),
-				'num_accessible_scripts':count_accessible_scripts(item)}
+	'''
+	DEFAULT_CONFIG = {}
+	DEFAULT_TEST_CONFIG = {
+	'enabled':True,
+	"DESCRIPTION":"You may change any of the items in this config, if you enter a negative value, the test will not be run."
+	}
 	
-	if "kurt.user_objects.Stage" in CLASSNAME:
-		return {"fields":to_dict(item.fields, False), 
-				"backgrounds":to_dict(item.backgrounds), 
-				"sounds":to_dict(item.sounds, False)}
-	
-	if "kurt.user_objects.SpriteCollection" in CLASSNAME:
-		return [to_dict(x) for x in item]
-	
-	if "kurt.user_objects.Sprite" in CLASSNAME:
-		return {"fields":to_dict(item.fields, False), 
-				"costumes":to_dict(item.costumes), 
-				"sounds":to_dict(item.sounds, False)}
-	
-	if "kurt.user_objects.Image" in CLASSNAME:
-		#x = io.StringIO()
-		#item.get_image().save(x, u"PNG")
-		#contents = x.getvalue().encode("base64")
-		#x.close()
-		return "<Image>"# 'data:image/png;base64,' + contents
-	
-	if 'kurt.scripts.ScriptCollection' in CLASSNAME:
-		return [to_dict(x) for x in item]
-	
-	if 'kurt.scripts.Script' in CLASSNAME:
-		has_hat = 'Hat' in item.blocks[0].command
-		return {"has_hat":has_hat, "script":str(item)}
-	
-	if 'kurt.user_objects.Sound' in CLASSNAME:
-		return {'fields':to_dict(item.fields, False)}
-	
-	if isinstance(item, dict):
-		to_ret = {}
+	def __init__(self):
 		
-		for key, val in item.items():
-			if not str(key).startswith("_"):
-				if deepcopy == False and (isinstance(item, list) or isinstance(item, dict)):
-					to_ret[key] = str(val)
-				else:
-					to_ret[key] = to_dict(val)
-		return to_ret
+		# append all possible tests to the default config
+		for name, val, fun, t, f in SCRATCH_FUNCTIONS:
+			self.DEFAULT_TEST_CONFIG[name] = val
+		
+		
+		AbstractPlugin.__init__(self, 
+					"Scratch Grader", 
+					"Joseph Lewis <joehms22@gmail.com>", 
+					0.1, 
+					"BSD 3 Clause",
+					self.DEFAULT_CONFIG,
+					self.DEFAULT_TEST_CONFIG)
 	
-	if isinstance(item, list):
-		return [to_dict(x) for x in item]
-	
-	if isinstance(item, int):
-		return item
-	
-	if isinstance(item, float):
-		return item
-	
-	return str(item)
+	def process_upload(self, upload, test_config):
+		'''Called when an upload has been input in to the program.
+		
+		Returns a dictionary with pairs corresponding to:
+		{testname, TAPInstance}
+		
+		This software will parse 
+		http://podwiki.hexten.net/TAP/TAP.html?page=TAP
+		
+		'''
+		
+		if test_config.get("enabled", False) == False:
+			return None
+		
+		if kurt == None:
+			test = magpie.tap.TestAnythingProtocol("Scratch Grader Configuration")
+			test.fail("kurt is not installed", todo="Install Kurt" )
+		
+		print("Processing upload");
+		tests = []
+		for path in upload.items():
+			if path.endswith(".sb"):
+				#scratch = to_dict(kurt.ScratchProjectFile(path))
+				scratch = kurt.ScratchProjectFile(path)
+				
+				test = magpie.tap.TestAnythingProtocol("Scratch Checks")
+				for name, val, fun, t, f in SCRATCH_FUNCTIONS:
+					expected_value = test_config.get(name, val)
+					
+					if expected_value < 0:
+						continue
+					
+					t = t.format(n=expected_value)
+					f = f.format(n=expected_value)
+					test.assert_true(fun(scratch, expected_value), t, f)
+					self.DEFAULT_TEST_CONFIG[name] = val
+					
+				tests.append(test)
+		
+		return tests

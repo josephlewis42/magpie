@@ -44,32 +44,25 @@ class SMTPFrontend(AbstractPlugin):
 	'''Provides an email based frontend to the automated grading tool.
 	'''
 	DEFAULT_CONFIG = {
-		'username':'somebody@gmail.com', 
-		'password':'myPassword', 
-		'pop_host':'pop.gmail.com',
+		'username':u'somebody@gmail.com', 
+		'password':u'password', 
+		'pop_host':u'pop.gmail.com',
 		'pop_port':995,
 		'pop_tls_enabled':True,
-		'smtp_host':'smtp.gmail.com',
+		'smtp_host':u'smtp.gmail.com',
 		'smtp_port':587,
 		'smtp_tls_enabled':False,
-		'header':'Welcome to the automated sumission tool!',
-		'footer':'Copyright 2013 Joseph Lewis III',
-		'reply_subject':'Your Recent Submission',
+		'header':u'Welcome to the automated sumission tool!',
+		'footer':u'Copyright 2013 Joseph Lewis III',
+		'reply_subject':u'Your Recent Submission',
 	}
 	
 	def __init__(self):
-		AbstractPlugin.__init__(self, "SMTP Frontend", "Joseph Lewis <joehms22@gmail.com>", 0.1, "BSD 3 Clause")
-		
-	def update_config(self, config):
-		'''Called when the configuration for the plugin has been updated from
-		another source.
-		'''
-		if self._config == None:
-			self._magpie.call_function(self.task, 1)
-		
-		self._supplement_dict(config, self.DEFAULT_CONFIG)
-		self._config = config
-		self._magpie
+		AbstractPlugin.__init__(self, "SMTP Frontend", "Joseph Lewis <joehms22@gmail.com>", 0.1, "BSD 3 Clause", self.DEFAULT_CONFIG, {})
+	
+	def setup(self, *args):
+		AbstractPlugin.setup(self, *args)
+		self._magpie.call_function(self.task, 1)
 	
 	def _process_uploads(self):
 		documents = []
@@ -90,6 +83,12 @@ class SMTPFrontend(AbstractPlugin):
 			message = parser.Parser().parsestr(mssg)
 			
 			doc = magpie.comm.Document(message['from'], self.get_name())
+			subj = message['Subject']
+			
+			test = ""
+			for key in self._magpie.test_configurations.keys():
+				if key.lower() in subj.lower():
+					test = key
 			
 			for part in message.walk():
 				fn = part.get_filename()
@@ -102,7 +101,7 @@ class SMTPFrontend(AbstractPlugin):
 					finfo = part.get_payload()
 				
 				doc.add_file(fn, finfo)
-			self._magpie.submit_document(doc)
+			self._magpie.submit_document(doc, key)
 			documents.append(doc)
 		pop_conn.quit()
 		return documents

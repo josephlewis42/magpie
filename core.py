@@ -46,45 +46,43 @@ import inspect
 from magpie.plugins.abstract_plugin import AbstractPlugin
 
 TASK_CHECK_SLEEP_S = 60
+PLUGINS_DIRECTORY = "plugins/"
+CONFIG_FILE_LOCATION = "config.json"
+DEFAULT_TEST_CONFIGURATION_NAME = "Default"
+
+DEFAULT_MAGPIE_CONFIG = {
+"Title":u"Automated Submission Tool",
+"Header":u"Welcome to the automated submission tool!",
+"Footer":u"Copyright 2013 Joseph Lewis III"
+}
+
+DEFAULT_CONFIGURATION_CONFIG = {}
 
 class Magpie:
 	_logger = None
 	_loaded_plugins = None
 	_loaded_plugins_lock = threading.Lock()
-	_config_file_location = None
-	_configuration = None
 	_tasks = None # [function to call, n minutes, last_running_thread]
+	
+	# various configurations
+	test_configurations = None
+	magpie_configuration = None
+	plugin_configuration = None
+	
 
-	def __init__(self, config_file="config.json"):
+	def __init__(self):
 		''' Sets up the core of the program.
 		'''
-		self._config_file_location = config_file
 		self._tasks = {}
-		
-		
 		self._logger = self.get_logger("Magpie Core")
+		
 		self._logger.info("Starting Program")
 		
-		self._configuration = self.__load_configuration()
+		self.__load_configuration()
+		self.__load_plugins()
 		
-
-		self._loaded_plugins = []
-		self._logger.info("Setting Up Plugins")
-		
-		load_plugins("plugins/", AbstractPlugin)
-		plugins = AbstractPlugin.__subclasses__()
-		
-		for plugin in plugins:
-			self._logger.info("Loading plugin: {}".format(plugin))
-			plugin = plugin()
-			pconfig = {}
-			if plugin.get_name() in self._configuration:
-				pconfig = self._configuration[plugin.get_name()]
-			
-			plugin.setup(pconfig, self.get_logger(plugin.get_name()), self)
-			
-			with self._loaded_plugins_lock:
-				self._loaded_plugins.append(plugin)
+		if len(self.test_configurations) == 0:
+			self.make_new_test_configuration(DEFAULT_TEST_CONFIGURATION_NAME)
 
 		self._logger.info("Finished Init")
 		
@@ -113,17 +111,52 @@ class Magpie:
 						self._logger.error(str(e))
 					
 				time.sleep(TASK_CHECK_SLEEP_S)
-				# TODO check for tasks that need to be run, and run them.
 		except(KeyboardInterrupt,SystemExit):
 			self.shutdown()
 		
 	def __load_configuration(self):
-		'''Loads the main configuration file for the project.'''
+		'''Loads the main configuration file for the project, on JSON
+		error, returns a blank config.'''
+		cfg = {}
 		try:
-			with open(self._config_file_location) as config:
-				return json.load(config)
+			with open(CONFIG_FILE_LOCATION) as config:
+				cfg = json.load(config)
 		except IOError:
-			return {}
+			pass
+			
+		
+		self.test_configurations = cfg.get('tests', {})
+		self.magpie_configuration = cfg.get('magpie', DEFAULT_MAGPIE_CONFIG)
+		AbstractPlugin._supplement_dict(self.magpie_configuration, DEFAULT_MAGPIE_CONFIG)
+		self.plugin_configuration = cfg.get('plugins', {})
+	
+	def __load_plugins(self):
+		'''Loads the plugins from the plugin directory and sets up core with 
+		them.
+		
+		'''
+		self._logger.info("Setting Up Plugins")
+		
+		self._loaded_plugins = []
+		load_plugins(PLUGINS_DIRECTORY, AbstractPlugin)
+		plugins = AbstractPlugin.__subclasses__()
+		
+		for plugin in plugins:
+			self._logger.info("Loading plugin: {}".format(plugin))
+			plugin = plugin()
+			pconfig = {}
+			if plugin.get_name() in self.plugin_configuration:
+				pconfig = self.plugin_configuration[plugin.get_name()]
+			
+			plugin.setup(pconfig, self.get_logger(plugin.get_name()), self)
+			
+			with self._loaded_plugins_lock:
+				self._loaded_plugins.append(plugin)
+		
+	
+	def global_config(self, key, default_value):
+		''' Returns a portion of the global config.'''
+		return self.magpie_configuration.get(key, default_value)
 		
 	def get_logger(self, name):
 		'''	Creates a logger with the given name that writes to the default
@@ -139,15 +172,41 @@ class Magpie:
 
 		logger.setLevel(logging.INFO)
 		return logger
+		
+	def make_new_test_configuration(self, name):
+		""" Returns a new test configuration for all of the given plugins.		
+		"""
+
+		cfg = {}
+		
+		for p in self._loaded_plugins:
+			cfg[p.get_name()] = p.get_default_test_configuration()
+		
+		self.test_configurations[name] = cfg
 	
-	def get_reporter(self):
-		pass
-	
-	def submit_document(self, document):
+	def submit_document(self, document, configuration_type):
+		''' Processes an uploaded document.
+		'''
+		
+		cfgs = self.test_configurations.get(configuration_type, {})
+		
+		if len(cfgs) == 0:
+			cfgs = self.test_configurations.get(DEFAULT_TEST_CONFIGURATION_NAME, {})
+		
 		with self._loaded_plugins_lock:
 			for plug in self._loaded_plugins:
-				document.add_results(plug.process_upload(document))
 				
+				# get the configuration for the given type for the given plugin
+				cfg = cfgs.get(plug.get_name(), None)
+				if cfg == None:
+					cfg = plug.get_default_test_configuration()
+					cfgs[plug.get_name()] = cfg
+			
+				try:
+					document.add_results(plug.process_upload(document, cfg))
+				except Exception as e:
+					print("Failed loading {}".format(plug.get_name()))
+					print(str(e))
 		return document
 		
 	
@@ -160,16 +219,21 @@ class Magpie:
 	
 	def shutdown(self):
 		self._logger.info("Shutting down...")
-		full_config = {}
 		
+		cfg = {
+			'tests':self.test_configurations,
+			'magpie':self.magpie_configuration,
+			'plugins':{}
+		}
+
 		with self._loaded_plugins_lock:
 			for plug in self._loaded_plugins:
-				full_config[plug.get_name()] = plug.get_config()
+				cfg['plugins'][plug.get_name()] = plug.get_config()
 		
-		print(full_config)
+		self._logger.info("Shutdown Config %s" % (cfg))
 		
-		with open(self._config_file_location, 'w') as output:
-			json.dump(full_config, output)
+		with open(CONFIG_FILE_LOCATION, 'w') as output:
+			json.dump(cfg, output)
 		
 		self._logger.info("Shutdown complete.")
 

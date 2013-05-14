@@ -73,6 +73,9 @@ MAIN_PAGE = """
 UPLOAD_FORM = """
 <form method='post' enctype='multipart/form-data'>
 <input type="file" name="upfile" size="chars"> <br>
+
+{options}
+
 <input type='submit'/>
 </form>
 """
@@ -104,7 +107,7 @@ would like processed.
 	
 	def __init__(self):
 		Handler._frontend_instance = self
-		AbstractPlugin.__init__(self, "HTTP", "Joseph Lewis <joehms22@gmail.com>", 0.1, "BSD 3 Clause")
+		AbstractPlugin.__init__(self, "HTTP", "Joseph Lewis <joehms22@gmail.com>", 0.1, "BSD 3 Clause", self.DEFAULT_CONFIG, {})
 		
 	
 	def _start_web_server(self):
@@ -123,12 +126,12 @@ would like processed.
 		if self._http_server != None:
 			self._http_server.shutdown()
 		
-	def update_config(self, config):
+	def update_config(self, *args):
 		'''Called when the configuration for the plugin has been updated from
 		another source.
 		'''
-		self._supplement_dict(config, self.DEFAULT_CONFIG)
-		self._config = config
+		AbstractPlugin.update_config(self, *args)
+
 		self._logger.info("Starting HTTP Server on Port: http://{host}:{port}".format(**self._config))
 		background_thread = threading.Thread(target=self._start_web_server)
 		background_thread.daemon = True
@@ -144,7 +147,14 @@ class Handler(BaseHTTPRequestHandler):
 	def do_GET(self):
 		self.send_response(200)
 		self.end_headers()
-		message =  MAIN_PAGE.format(content=UPLOAD_FORM, style=STYLE, **self._frontend_instance._config)
+		
+		# create form for choosing the test to perform.
+		tests = self._frontend_instance._magpie.test_configurations.keys()
+		f = ["<option value='{n}'>{n}</option><br>".format(n=n) for n in tests]
+		f = "<select name='test' required>{}</select><br>".format("".join(f))
+		
+		up = UPLOAD_FORM.format(options=f)
+		message =  MAIN_PAGE.format(content=up, style=STYLE, **self._frontend_instance._config)
 		self.wfile.write(bytes(message, 'UTF-8'))
 		return
 	
@@ -158,12 +168,15 @@ class Handler(BaseHTTPRequestHandler):
 					})
 
 		doc = magpie.comm.Document("No User", self._frontend_instance.get_name())
+		test = ""
 		for field in form.keys():
 			if form[field].filename:
 				doc.add_file(form[field].filename, form[field].file)
+			
+			if field == 'test':
+				test = form[field].value
 		
-		
-		self._frontend_instance._magpie.submit_document(doc)
+		self._frontend_instance._magpie.submit_document(doc, test)
 		self.send_response(200)
 		self.end_headers()
 		self.wfile.write(bytes(MAIN_PAGE.format(content=doc.to_html(), style=STYLE, **self._frontend_instance._config), 'utf-8'))

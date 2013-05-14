@@ -47,10 +47,15 @@ class BasicUpload(AbstractPlugin):
 			"Basic Upload", 
 			"Joseph Lewis <joehms22@gmail.com>", 
 			0.1, 
-			"BSD 3 Clause")
+			"BSD 3 Clause",{},{'enabled':True})
 	
-	def process_upload(self, upload):
+	def process_upload(self, upload, test_configuration):
 		''' Very basic tests about the uploaded file. '''
+		
+		# if we're not enabled, don't run
+		if test_configuration.get('enabled', False) == False:
+			return None
+			
 		test = magpie.tap.TestAnythingProtocol(title="Basic Upload")
 		one = False
 		for path in upload.items():

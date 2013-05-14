@@ -46,12 +46,21 @@ class AbstractPlugin(object):
 	_author = None
 	_version = None
 	_license = None
+	_default_config = None
+	_default_test = None
 	
-	def __init__(self, plugin_name, plugin_author, plugin_version, plugin_license):
+	def __init__(self, plugin_name, plugin_author, plugin_version, plugin_license, default_config, default_test):
 		self._name = plugin_name
 		self._author = plugin_author
 		self._version = plugin_version
 		self._license = plugin_license
+		self._default_config = default_config
+		self._default_test = default_test
+		
+		# convert everything to unicode for consistency with the JSON loader.
+		for key, value in self._default_config.items():
+			if type(value) == type(''):
+				self._default_config[key] = unicode(value)
 	
 	def setup(self, config, logger, core):
 		'''Initializes the plugin with the given configuration dictionary.
@@ -83,11 +92,11 @@ class AbstractPlugin(object):
 		'''Called when the configuration for the plugin has been updated from
 		another source.
 		
-		By default, simply updates self._config, you'll probably want to 
-		override this however.
+		By default, simply updates self._config and supplements it with the 
+		default config.
 		
 		'''
-		self._config = config
+		self._config = self._supplement_dict(config, self._default_config)
 	
 	def get_config(self):
 		'''Gets the configuration for the plugin.
@@ -96,7 +105,7 @@ class AbstractPlugin(object):
 		'''
 		return self._config
 	
-	def process_upload(self, upload):
+	def process_upload(self, upload, test_configuration):
 		'''Called when an upload has been input in to the program.
 		
 		Returns a dictionary with pairs corresponding to:
@@ -110,12 +119,6 @@ class AbstractPlugin(object):
 	
 	def upload_processed(self, upload):
 		'''Called after process_upload has been completed on the upload.'''
-		pass
-	
-	def ask_setup_info(self):
-		'''Called the first time the user wishes to configure the product
-		use raw_inputs for 
-		'''
 		pass
 	
 	def get_name(self):
@@ -134,7 +137,13 @@ class AbstractPlugin(object):
 		'''Returns the license of the plugin.'''
 		return self._license
 	
-	def _supplement_dict(self, to_supplement, supplement):
+	def get_default_test_configuration(self):
+		''' Gets a default configuration used for a test.
+		'''
+		return self._default_test
+		
+	@staticmethod
+	def _supplement_dict(to_supplement, supplement):
 		'''Finds any keys in supplement that don't exist in to_supplement,
 		and adds the key->value paris found in supplement. Also replaces
 		keys that exist in to_supplement if their type does not match that given
