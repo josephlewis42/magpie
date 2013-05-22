@@ -124,6 +124,10 @@ class AbstractPlugin(object):
 	def get_name(self):
 		'''Returns the name for the plugin.'''
 		return self._name
+		
+	def get_name_version(self):
+		'''Returns the name and version concatonated with a string.'''
+		return "|".join([self._name, str(self._version)])
 	
 	def get_author(self):
 		'''Returns the author for the plugin.'''

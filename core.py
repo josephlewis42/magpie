@@ -81,6 +81,8 @@ class Magpie:
 		self.__load_configuration()
 		self.__load_plugins()
 		
+		self.upgrade_test_configurations()
+		
 		if len(self.test_configurations) == 0:
 			self.make_new_test_configuration(DEFAULT_TEST_CONFIGURATION_NAME)
 
@@ -184,6 +186,36 @@ class Magpie:
 		
 		self.test_configurations[name] = cfg
 	
+	def _decompose_plugin_identifier(self, identifier):
+		'''Decomposes a plugin identifier in to a name and version.
+		
+		'''
+		if "|" not in identifier:
+			return [identifier, ""]
+		
+		return identifier.split("|",1)
+	
+	def upgrade_test_configurations(self):
+		'''Upgrades all of the test configurations in the project.'''
+		new_configurations = {}
+		plugins_by_name = dict((p.get_name(), p) for p in self._loaded_plugins)
+		
+		for testname, configurations in self.test_configurations.items():
+			new_configurations[testname] = dict()
+			
+			for identifier, config in configurations.items():
+				name, version = self._decompose_plugin_identifier(identifier)
+				plugin = plugins_by_name[name]
+				
+				# if version is new enough, don't upgrade
+				if version >= str(plugin.get_version()):
+					new_configurations[testname][identifier] = config
+				else:
+					AbstractPlugin._supplement_dict(config, plugin.get_default_test_configuration())
+					new_configurations[testname][plugin.get_name_version()] = config
+		
+		self.test_configurations = new_configurations
+	
 	def submit_document(self, document, configuration_type):
 		''' Processes an uploaded document.
 		'''
@@ -197,7 +229,7 @@ class Magpie:
 			for plug in self._loaded_plugins:
 				
 				# get the configuration for the given type for the given plugin
-				cfg = cfgs.get(plug.get_name(), None)
+				cfg = cfgs.get(plug.get_name_version(), None)
 				if cfg == None:
 					cfg = plug.get_default_test_configuration()
 					cfgs[plug.get_name()] = cfg

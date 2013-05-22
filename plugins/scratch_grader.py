@@ -45,14 +45,76 @@ try:
 except ImportError:
 	kurt = None
 
+OPERATORS = ["<","=",">","|","-","/","*","&","+","not","randomFrom:to:",
+"concatenate:with:","letter:of:","stringLength:","rounded", # mod?
+"computeFunction:of:"]
+
+VARIABLES = ["readVariable", "hideVariable:", "showVariable:", "changeVar:by:",
+"setVar:to:", "changeVariable", "contentsOfList:"]
+
+LISTS = ["contentsOfList:", "setLine:ofList:to:", "insert:at:ofList:",
+"deleteLine:ofList:", "append:toList:", "getLine:ofList:", "lineCountOfList:",
+"list:contains:"]
+
+
+MOTION = ["heading", "ypos", "xpos", "forward:", "turnRight:", "turnLeft:",
+"heading:", "pointTowards:", "gotoX:y:", "gotoSpriteOrMouse:", "glideSecs:toX:y:elapsed:from:",
+"changeXposBy:", "xpos:", "changeYposBy:","ypos:" "bounceOffEdge"]
+
+LOOKS = ["goBackByLayers:", "comeToFront", "hide", "show", "setSizeTo:",
+"changeSizeBy:", "filterReset", "color" "setGraphicEffect:to:", 
+"changeGraphicEffect:by:", "think:", "think:duration:elapsed:from:",
+"say:", "say:duration:elapsed:from:", "nextCostume", "lookLike:", "costumeIndex",
+"scale"]
+
+SOUNDS = ["playSound:", "doPlaySoundAndWait", "stopAllSounds", 
+"drum:duration:elapsed:from:", "rest:elapsed:from:", "noteOn:duration:elapsed:from:",
+"midiInstrument:", "changeVolumeBy:", "setVolumeTo:", "changeTempoBy:",
+"setTempoTo:", "tempo", "volume" ]
+
+PEN = [ "clearPenTrails", "putPenDown", "putPenUp", "penColor:", "changePenHueBy:",
+"setPenHueTo:", "changePenShadeBy:", "setPenShadeTo:", "changePenSizeBy:", "penSize",
+"stampCostume"]
+
+
+CONTROL = [ "stopAll", "doReturn", # stop script
+"EventHatMorph", "doIf", "doIfelse", "doWaitUntil", "doUntil", "doRepeat",
+"broadcast:", "doBroadcastAndWait", "doForeverIf", "wait:elapsed:from:",
+"doForever", "MouseClickEventHatMorph", "Scratch-MouseClickEvent",
+"KeyEventHatMorph", "Scratch-StartClicked"]
+
+SENSING = ["touching:", "mouse", "touchingColor:", "color:", "doAsk", "answer", "mouseX",
+"mouseY", "mousePressed", "keyPressed:", "space", "distanceTo", "timerReset",
+"timer", "getAttribute:of:",  "soundLevel", "isLoud", "sensor:", "slider",
+"sensorPressed:"]
+
+def get_scripts(scratch):
+	scripts = []
+	scripts += scratch.stage.scripts
+	
+	for sprite in scratch.sprites:
+		scripts += sprite.scripts
+	
+	return scripts
+
+def get_blocks(scratch):
+	'''Gets all of the blocks in the environment.'''
+	blocks = []
+	
+	for script in get_scripts(scratch):
+		blocks += [x for x in script.to_block_list()]
+	
+	return blocks
+
+
 
 def count_scripts(scratch):
 	''' Counts the number of scripts in a project. '''
-	count = len(scratch.stage.scripts)
-	for sprite in scratch.sprites:
-		count += len(sprite.scripts)
-	
-	return count 
+	return len(get_scripts(scratch))
+
+def count_blocks_type(scratch, scriptslist):
+	'''Counts the number of scripts of a given type'''
+	return sum([1 for block in get_blocks(scratch) if block.command in scriptslist])
 
 def count_costumes(scratch):
 	ct = 0
@@ -105,6 +167,17 @@ MIN_BLOCKS	= lambda scratch, n: count_blocks(scratch) >= n
 MIN_VARIABLES = lambda scratch, n: count_variables(scratch) >= n
 MIN_LISTS = lambda scratch, n: count_lists(scratch) >= n
 
+MIN_OPERATORS = lambda scratch, n: count_blocks_type(scratch, OPERATORS) >= n
+MIN_VARIABLES = lambda scratch, n: count_blocks_type(scratch, VARIABLES) >= n
+MIN_LISTS = lambda scratch, n: count_blocks_type(scratch, LISTS) >= n
+MIN_MOTION = lambda scratch, n: count_blocks_type(scratch, MOTION) >= n
+MIN_LOOKS = lambda scratch, n: count_blocks_type(scratch, LOOKS) >= n
+MIN_SOUND = lambda scratch, n: count_blocks_type(scratch, SOUNDS) >= n
+MIN_PEN = lambda scratch, n: count_blocks_type(scratch, PEN) >= n
+MIN_CONTROL = lambda scratch, n: count_blocks_type(scratch, CONTROL) >= n
+MIN_SENSING = lambda scratch, n: count_blocks_type(scratch, SENSING) >= n
+
+
 # user-configurable functions for the results, in the format:
 # JSON_NAME, default value, evaluation function, if true, if false
 SCRATCH_FUNCTIONS = [
@@ -115,7 +188,16 @@ SCRATCH_FUNCTIONS = [
 ('Minimum Costumes', 1, MIN_COSTUMES, MIN_PASS_LINE.format(obj="costumes"), MIN_FAIL_LINE.format(obj="costumes")),
 ('Minimum Blocks', 3, MIN_BLOCKS, MIN_PASS_LINE.format(obj="blocks"), MIN_FAIL_LINE.format(obj="blocks")),
 ('Minimum Variables', 0, MIN_VARIABLES, MIN_PASS_LINE.format(obj="variables"), MIN_FAIL_LINE.format(obj="variables")),
-('Minimum Lists', 0, MIN_LISTS, MIN_PASS_LINE.format(obj="lists"), MIN_FAIL_LINE.format(obj="lists"))
+('Minimum Lists', 0, MIN_LISTS, MIN_PASS_LINE.format(obj="lists"), MIN_FAIL_LINE.format(obj="lists")),
+('Minimum Operator Blocks', -1, MIN_OPERATORS, MIN_PASS_LINE.format(obj='operator blocks'), MIN_FAIL_LINE.format(obj='operator blocks')),
+('Minimum Variable Blocks', -1, MIN_VARIABLES, MIN_PASS_LINE.format(obj='variable blocks'), MIN_FAIL_LINE.format(obj='variable blocks')),
+('Minimum List Blocks', -1, MIN_LISTS, MIN_PASS_LINE.format(obj='list blocks'), MIN_FAIL_LINE.format(obj='list blocks')),
+('Minimum Motion Blocks', -1, MIN_MOTION, MIN_PASS_LINE.format(obj='motion blocks'), MIN_FAIL_LINE.format(obj='motion blocks')),
+('Minimum Looks Blocks', -1, MIN_LOOKS, MIN_PASS_LINE.format(obj='looks blocks'), MIN_FAIL_LINE.format(obj='looks blocks')),
+('Minimum Sound Blocks', -1, MIN_SOUND, MIN_PASS_LINE.format(obj='sound blocks'), MIN_FAIL_LINE.format(obj='sound blocks')),
+('Minimum Pen Blocks', -1, MIN_PEN, MIN_PASS_LINE.format(obj='pen blocks'), MIN_FAIL_LINE.format(obj='pen blocks')),
+('Minimum Control Blocks', -1, MIN_CONTROL, MIN_PASS_LINE.format(obj='control blocks'), MIN_FAIL_LINE.format(obj='control blocks')),
+('Minimum Sensing Blocks', -1, MIN_OPERATORS, MIN_PASS_LINE.format(obj='sensing blocks'), MIN_FAIL_LINE.format(obj='sensing blocks'))
 ]
 
 

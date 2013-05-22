@@ -81,21 +81,13 @@ UPLOAD_FORM = """
 """
 
 STYLE = """
-html {background-color:#ccc;}
-h1 {text-align:center; font-family:Georgia;}
-body {
-	max-width: 800px;
-	margin: auto;
-	padding: 1em;
-	background: white;
-	color: #000;
-	font-family:Arial,Helvetica,Sans-serif;
-}
-table{margin-bottom:1em;margin-left:auto;margin-right:auto;}
-footer {
-	font-size:.8em; text-align:center; color:#aaa;
-}
-form {text-align:center;}
+html{background-color:#ccc;margin:1em}
+h1{text-align:center;font-family:Georgia;color:#0070BF}
+body{max-width:700px;background:#FFF;color:#000;font-family:Arial,Helvetica,Sans-serif;border-radius:1em;margin:auto;padding:1em}
+table{border:1px solid #ccc;margin-bottom:1em;margin-left:auto;margin-right:auto;border-radius:1em;padding:.5em}
+tr:nth-child(1){color:#0070BF;font-size:1.2em}
+footer{font-size:.8em;text-align:center;color:#aaa}
+form{text-align:center}
 """
 
 
