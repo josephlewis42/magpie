@@ -48,7 +48,6 @@ except Exception: # python 2
 
 
 import cgi
-
 from magpie.plugins.abstract_plugin import AbstractPlugin
 import magpie.comm
 import threading
@@ -86,15 +85,16 @@ h1{text-align:center;font-family:Georgia;color:#0070BF}
 body{max-width:700px;background:#FFF;color:#000;font-family:Arial,Helvetica,Sans-serif;border-radius:1em;margin:auto;padding:1em}
 table{border:1px solid #ccc;margin-bottom:1em;margin-left:auto;margin-right:auto;border-radius:1em;padding:.5em}
 tr:nth-child(1){color:#0070BF;font-size:1.2em}
+tr:nth-child(even){background-color:#ccc;}
 footer{font-size:.8em;text-align:center;color:#aaa}
 form{text-align:center}
 """
 
 
 class HTTPFrontend(magpie.plugins.abstract_plugin.AbstractPlugin):
-	DEFAULT_CONFIG = {'port':8000, 'host':'', 'banner':"""Welcome to the automated submission tool, to begin upload the file you
+	DEFAULT_CONFIG = {'port':8000, 'host':'', 'banner':"""Welcome to Magpie, to begin upload the file you
 would like processed.
-""", 'title':"Automated Submission Tool"}
+""", 'title':"Magpie - University of Denver"}
 	_http_server = None
 	
 	def __init__(self):

@@ -1,0 +1,30 @@
+{#
+	The main upload form for the application is stored here.
+#}
+
+{% extends "base.html" %}
+
+{% block title %}Upload{% endblock %}
+
+{% block content %}
+
+<h1>{{ title }}</h1>
+
+<p>{{ upload_instructions }}</p>
+
+<form method='post' enctype='multipart/form-data'>
+	<table>
+		<tr><th>Select your file</th><td><input type="file" name="upfile" size="chars" required></td></tr>
+		<tr><th>Select your test</th><td>
+			<select name='test' required>
+				{% for item in tests %}
+					<option value='{{ item }}'>{{ item }}</option>
+				{% endfor %}
+			</select>
+		</td></tr>
+		<tr><td></td><td><input type='submit' value='Process!'/></td></tr>
+	</table>
+</form>
+
+
+{% endblock %}

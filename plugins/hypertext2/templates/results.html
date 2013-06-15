@@ -1,0 +1,24 @@
+{#
+	Results from a given upload; 
+	the document variable is used to store the resulting document.
+#}
+
+{% block header %}
+<style>
+tr:nth-child(1){color:#0070BF;font-size:1.2em}
+</style>
+{% endblock %}
+
+{% extends "base.html" %}
+
+{% block title %}Results{% endblock %}
+
+{% block content %}
+	<h1>{{ title }} Results</h1>
+
+	{% autoescape False %}
+		<p>{{ results_header }}</p>
+		{{ document.to_html() }}
+		<p>{{ results_tail }}</p>
+	{% endautoescape %}
+{% endblock %}

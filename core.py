@@ -42,6 +42,7 @@ import imp
 import os
 import sys
 import inspect
+import traceback
 
 from magpie.plugins.abstract_plugin import AbstractPlugin
 
@@ -57,6 +58,16 @@ DEFAULT_MAGPIE_CONFIG = {
 }
 
 DEFAULT_CONFIGURATION_CONFIG = {}
+
+
+def log_results(fn):
+	''' A decorator to log the calls to a function.'''
+	def new(*args):
+		args[0]._logger.info("Calling {}...".format(fn.__name__))
+		ret = fn(*args)
+		args[0]._logger.info("{} finished".format(fn.__name__))
+		return ret
+	return new
 
 class Magpie:
 	_logger = None
@@ -87,6 +98,9 @@ class Magpie:
 			self.make_new_test_configuration(DEFAULT_TEST_CONFIGURATION_NAME)
 
 		self._logger.info("Finished Init")
+		
+		# write the config file every few minutes
+		self.call_function(self.write_config, 1)
 		
 		
 		running_tasks = {}
@@ -146,10 +160,9 @@ class Magpie:
 		for plugin in plugins:
 			self._logger.info("Loading plugin: {}".format(plugin))
 			plugin = plugin()
-			pconfig = {}
-			if plugin.get_name() in self.plugin_configuration:
-				pconfig = self.plugin_configuration[plugin.get_name()]
-			
+			pconfig = self.plugin_configuration.get(plugin.get_name(), {})
+			if pconfig == None:
+				pconfig = {}
 			plugin.setup(pconfig, self.get_logger(plugin.get_name()), self)
 			
 			with self._loaded_plugins_lock:
@@ -185,6 +198,8 @@ class Magpie:
 			cfg[p.get_name()] = p.get_default_test_configuration()
 		
 		self.test_configurations[name] = cfg
+		
+		return cfg
 	
 	def _decompose_plugin_identifier(self, identifier):
 		'''Decomposes a plugin identifier in to a name and version.
@@ -225,20 +240,24 @@ class Magpie:
 		if len(cfgs) == 0:
 			cfgs = self.test_configurations.get(DEFAULT_TEST_CONFIGURATION_NAME, {})
 		
+		plugins = []
 		with self._loaded_plugins_lock:
-			for plug in self._loaded_plugins:
-				
-				# get the configuration for the given type for the given plugin
-				cfg = cfgs.get(plug.get_name_version(), None)
-				if cfg == None:
-					cfg = plug.get_default_test_configuration()
-					cfgs[plug.get_name()] = cfg
+			plugins += self._loaded_plugins
 			
-				try:
-					document.add_results(plug.process_upload(document, cfg))
-				except Exception as e:
-					print("Failed loading {}".format(plug.get_name()))
-					print(str(e))
+		for plug in plugins:
+			
+			# get the configuration for the given type for the given plugin
+			cfg = cfgs.get(plug.get_name_version(), None)
+			if cfg == None:
+				cfg = plug.get_default_test_configuration()
+				cfgs[plug.get_name()] = cfg
+		
+			try:
+				document.add_results(plug.process_upload(document, cfg))
+			except Exception as e:
+				print("Failed loading {}".format(plug.get_name()))
+				print(str(e))
+				traceback.print_exc()
 		return document
 		
 	
@@ -249,9 +268,9 @@ class Magpie:
 		'''
 		self._tasks[function] = minutes
 	
-	def shutdown(self):
-		self._logger.info("Shutting down...")
-		
+	@log_results
+	def write_config(self):
+		'''Writes the configuration to a file.'''
 		cfg = {
 			'tests':self.test_configurations,
 			'magpie':self.magpie_configuration,
@@ -262,12 +281,12 @@ class Magpie:
 			for plug in self._loaded_plugins:
 				cfg['plugins'][plug.get_name()] = plug.get_config()
 		
-		self._logger.info("Shutdown Config %s" % (cfg))
-		
 		with open(CONFIG_FILE_LOCATION, 'w') as output:
 			json.dump(cfg, output)
-		
-		self._logger.info("Shutdown complete.")
+	
+	@log_results
+	def shutdown(self):
+		self.write_config()
 
 
 
@@ -287,8 +306,6 @@ def load_plugins(plugin_path, instance):
 	for f in os.listdir(plugin_dir):
 		if f.endswith(".py"):
 			name = f[:-3]
-		elif f.endswith(".pyc"):
-			name = f[:-4]
 		elif os.path.isdir(os.path.join(plugin_dir, f)):
 			name = f
 		else:

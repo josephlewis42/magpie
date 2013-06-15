@@ -50,6 +50,9 @@ class AbstractPlugin(object):
 	_default_test = None
 	
 	def __init__(self, plugin_name, plugin_author, plugin_version, plugin_license, default_config, default_test):
+		if plugin_name == None or plugin_author == None or plugin_version == None or plugin_license == None or default_config == None or default_test == None:
+			raise ValueError("Cannot have a 'None' value!")	
+		
 		self._name = plugin_name
 		self._author = plugin_author
 		self._version = plugin_version
@@ -114,6 +117,10 @@ class AbstractPlugin(object):
 		This software will parse 
 		http://podwiki.hexten.net/TAP/TAP.html?page=TAP
 		
+		Note that this piece of the software will be run in multiple threads;
+		it is thus critical that you not modify external variables to avoid
+		race conditions and concurrent modification while it is running.
+		
 		'''
 		pass
 	
@@ -162,6 +169,10 @@ class AbstractPlugin(object):
 		is added.
 		
 		'''
+		if to_supplement == None:
+			raise ValueError("to_supplement cannot be None")
+		if supplement == None:
+			raise ValueError("supplement cannot be None")
 		
 		for key, value in supplement.items():
 			if not key in to_supplement:

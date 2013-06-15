@@ -1,0 +1,21 @@
+{#
+	Echos configuration details of the project.
+#}
+
+{% extends "base.html" %}
+
+{% block title %}Editing Test {{ test_name }}{% endblock %}
+
+{% block content %}
+	<h1>Editing Test {{ test_name }}</h1>
+	{% if msg %}
+	<h2>{{ msg }}</h2>
+	{% endif %}
+	
+	<form method='post'>
+		<textarea name='test'>{{ test_value }}</textarea>
+		<br>
+		<br>
+		<input type='submit' value='Submit Changes' />
+	</form>
+{% endblock %}

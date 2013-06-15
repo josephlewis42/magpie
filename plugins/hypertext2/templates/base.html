@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>{% block title %}{% endblock %}</title>
+	<meta encoding='utf-8' />
+	<style>
+		html{background-color:#ccc;margin:1em}
+		h1{text-align:center;font-family:Georgia;color:#0070BF}
+		body{max-width:700px;background:#FFF;color:#000;font-family:Arial,Helvetica,Sans-serif;border-radius:1em;margin:auto;padding:1em}
+		footer{font-size:.8em;text-align:center;color:#aaa}
+		form{text-align:center}
+		table{border:1px solid #ccc;margin-bottom:1em;margin-left:auto;margin-right:auto;border-radius:1em;padding:.5em}
+		tr:nth-child(even){background-color:#ccc;}
+		.motd{
+			background-color:#0070BF;
+			width:calc(100% - 2em);
+			display:block;
+			border:3px solid #0061a6;
+			font-size:1.2em;
+			color:#fff;
+			padding:1em;
+		}
+	</style>
+	{% block header %}{% endblock %}
+</head>
+<body>
+	{% if message_of_the_day %}
+		<div class='motd'><p>{{ message_of_the_day }}</p></div>
+	{% endif %}
+	{% block content %}
+		So long and thanks for all the fish!
+	{% endblock %}
+	<br/>
+	<footer>&copy; Joseph Lewis 2013</footer>
+</body>
+</html>

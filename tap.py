@@ -123,7 +123,7 @@ class TestAnythingProtocol:
 		'''
 		
 		output = """
-<table border='1'>
+<table>
 	<tr><th colspan='3'>{title}</th></tr>
 	<tr><th>{status}</th><th>{desc}</th><th>{extra}</th></tr>
 """.format(title=self._title, status=status_i18n, desc=description_i18n,extra=extra_i18n )
