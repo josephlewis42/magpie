@@ -94,7 +94,7 @@ form{text-align:center}
 class HTTPFrontend(magpie.plugins.abstract_plugin.AbstractPlugin):
 	DEFAULT_CONFIG = {'port':8000, 'host':'', 'banner':"""Welcome to Magpie, to begin upload the file you
 would like processed.
-""", 'title':"Magpie - University of Denver"}
+""", 'title':"Magpie - University of Denver", 'enabled':False}
 	_http_server = None
 	
 	def __init__(self):
@@ -106,7 +106,7 @@ would like processed.
 		''' Starts the web server. '''
 		if self._http_server != None:
 			self._http_server.shutdown()
-		
+			
 		serveraddr = (self._config['host'], self._config['port'])
 		self._http_server = ThreadedHTTPServer(serveraddr, Handler)
 		self._logger.info('Starting server')
@@ -124,6 +124,11 @@ would like processed.
 		'''
 		AbstractPlugin.update_config(self, *args)
 
+		if not self._config['enabled']:
+			if self._http_server != None:
+				self._http_server.shutdown()
+			return
+		
 		self._logger.info("Starting HTTP Server on Port: http://{host}:{port}".format(**self._config))
 		background_thread = threading.Thread(target=self._start_web_server)
 		background_thread.daemon = True

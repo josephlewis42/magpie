@@ -137,6 +137,7 @@ class Scratch2Backend(AbstractPlugin):
 			return None
 		
 		
+		print("Test config: {}".format(test_config))
 		tests = []
 		for path in upload.items():
 			if path.endswith(".sb2"):
@@ -155,4 +156,5 @@ class Scratch2Backend(AbstractPlugin):
 					
 				tests.append(test)
 		
+		print("Test config: {}".format(test_config))
 		return tests

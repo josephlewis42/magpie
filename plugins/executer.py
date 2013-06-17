@@ -24,7 +24,7 @@ class Executer(AbstractPlugin):
 	'''
 	
 	def __init__(self):
-		AbstractPlugin.__init__(self, "Executer", "Joseph Lewis <joehms22@gmail.com>", 0.1, "BSD 3 Clause",{},{'enabled':True})
+		AbstractPlugin.__init__(self, "Executer", "Joseph Lewis <joehms22@gmail.com>", 0.1, "BSD 3 Clause",{},{'enabled':False})
 	
 	def process_upload(self, upload, test_config):
 		'''Called when an upload has been input in to the program.
@@ -39,6 +39,6 @@ class Executer(AbstractPlugin):
 		if test_config.get('enabled', False) == False:
 			return None
 		
-		progs = self._config['programs'].split("\n")
-		opts = self._config['programs'].split(" ")
+		progs = self._config.get('programs', "").split("\n")
+		#opts = progs.split(" ")
 		

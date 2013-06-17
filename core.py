@@ -79,7 +79,7 @@ class Magpie:
 	test_configurations = None
 	magpie_configuration = None
 	plugin_configuration = None
-	
+	configuration_load_time = 0.0 # time the config file was last loaded.
 
 	def __init__(self):
 		''' Sets up the core of the program.
@@ -130,6 +130,7 @@ class Magpie:
 		except(KeyboardInterrupt,SystemExit):
 			self.shutdown()
 		
+	@log_results
 	def __load_configuration(self):
 		'''Loads the main configuration file for the project, on JSON
 		error, returns a blank config.'''
@@ -137,15 +138,43 @@ class Magpie:
 		try:
 			with open(CONFIG_FILE_LOCATION) as config:
 				cfg = json.load(config)
+			self.configuration_load_time = os.path.getmtime(CONFIG_FILE_LOCATION)
 		except IOError:
 			pass
+		except ValueError: # on JSON parse error
+			print("Error")
+			if self.test_configuration == None:
+				self.test_configuration = {}
+			if self.magpie_configuration == None:
+				self.magpie_configuration = DEFAULT_MAGPIE_CONFIG
+			if self.plugin_configuration == None:
+				self.plugin_configuration = {}
+			return
 			
 		
 		self.test_configurations = cfg.get('tests', {})
 		self.magpie_configuration = cfg.get('magpie', DEFAULT_MAGPIE_CONFIG)
 		AbstractPlugin._supplement_dict(self.magpie_configuration, DEFAULT_MAGPIE_CONFIG)
 		self.plugin_configuration = cfg.get('plugins', {})
+		
+		self.update_plugin_configurations()
 	
+	@log_results
+	def update_plugin_configurations(self):
+		'''Updates the plugin configurations for all plugins with the loaded
+		configuration.
+		'''
+		
+		if None == self._loaded_plugins:
+			return
+		
+		for plug in self._loaded_plugins:
+			print(plug.get_name_version())
+			config = self.plugin_configuration.get(plug.get_name(), None)
+			print(config)
+			if config:
+				plug.update_config(config)
+
 	def __load_plugins(self):
 		'''Loads the plugins from the plugin directory and sets up core with 
 		them.
@@ -271,6 +300,12 @@ class Magpie:
 	@log_results
 	def write_config(self):
 		'''Writes the configuration to a file.'''
+		# make sure we don't already have a newer configuration
+		currtime = os.path.getmtime(CONFIG_FILE_LOCATION)
+		if currtime > self.configuration_load_time:
+			self.__load_configuration()
+			return
+		
 		cfg = {
 			'tests':self.test_configurations,
 			'magpie':self.magpie_configuration,
@@ -282,7 +317,9 @@ class Magpie:
 				cfg['plugins'][plug.get_name()] = plug.get_config()
 		
 		with open(CONFIG_FILE_LOCATION, 'w') as output:
-			json.dump(cfg, output)
+			json.dump(cfg, output, sort_keys=True, indent=4, separators=(',', ': '))
+		
+		self.configuration_load_time = os.path.getmtime(CONFIG_FILE_LOCATION)
 	
 	@log_results
 	def shutdown(self):

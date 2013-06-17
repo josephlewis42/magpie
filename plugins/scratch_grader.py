@@ -208,7 +208,7 @@ class ScratchGrader(AbstractPlugin):
 	'''
 	DEFAULT_CONFIG = {}
 	DEFAULT_TEST_CONFIG = {
-	'enabled':True,
+	'enabled':False,
 	"DESCRIPTION":"You may change any of the items in this config, if you enter a negative value, the test will not be run."
 	}
 	

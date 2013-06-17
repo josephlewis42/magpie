@@ -139,6 +139,7 @@ class HTTPFrontend2(AbstractPlugin):
 		another source.
 		'''
 		AbstractPlugin.update_config(self, *args)
+		print("http2 updating config {}".format(self._config))
 		try:
 			shutdown_server()
 		except RuntimeError:
