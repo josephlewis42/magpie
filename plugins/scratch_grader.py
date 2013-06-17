@@ -181,14 +181,14 @@ MIN_SENSING = lambda scratch, n: count_blocks_type(scratch, SENSING) >= n
 # user-configurable functions for the results, in the format:
 # JSON_NAME, default value, evaluation function, if true, if false
 SCRATCH_FUNCTIONS = [
-('Minimum Scripts', 3, MIN_SCRIPTS, MIN_PASS_LINE.format(obj="scripts"), MIN_FAIL_LINE.format(obj="scripts")),
-('Minimum Sounds', 3, MIN_SOUNDS, MIN_PASS_LINE.format(obj="sounds"), MIN_FAIL_LINE.format(obj="sounds")),
-('Minimum Sprites', 3, MIN_SPRITES, MIN_PASS_LINE.format(obj="sprites"), MIN_FAIL_LINE.format(obj="sprites")),
-('Minimum Backgrounds', 3, MIN_BGRDS, MIN_PASS_LINE.format(obj="backgrounds"), MIN_FAIL_LINE.format(obj="backgrounds")),
-('Minimum Costumes', 1, MIN_COSTUMES, MIN_PASS_LINE.format(obj="costumes"), MIN_FAIL_LINE.format(obj="costumes")),
-('Minimum Blocks', 3, MIN_BLOCKS, MIN_PASS_LINE.format(obj="blocks"), MIN_FAIL_LINE.format(obj="blocks")),
-('Minimum Variables', 0, MIN_VARIABLES, MIN_PASS_LINE.format(obj="variables"), MIN_FAIL_LINE.format(obj="variables")),
-('Minimum Lists', 0, MIN_LISTS, MIN_PASS_LINE.format(obj="lists"), MIN_FAIL_LINE.format(obj="lists")),
+('Minimum Scripts', -1, MIN_SCRIPTS, MIN_PASS_LINE.format(obj="scripts"), MIN_FAIL_LINE.format(obj="scripts")),
+('Minimum Sounds', -1, MIN_SOUNDS, MIN_PASS_LINE.format(obj="sounds"), MIN_FAIL_LINE.format(obj="sounds")),
+('Minimum Sprites', -1, MIN_SPRITES, MIN_PASS_LINE.format(obj="sprites"), MIN_FAIL_LINE.format(obj="sprites")),
+('Minimum Backgrounds', -1, MIN_BGRDS, MIN_PASS_LINE.format(obj="backgrounds"), MIN_FAIL_LINE.format(obj="backgrounds")),
+('Minimum Costumes', -1, MIN_COSTUMES, MIN_PASS_LINE.format(obj="costumes"), MIN_FAIL_LINE.format(obj="costumes")),
+('Minimum Blocks', -1, MIN_BLOCKS, MIN_PASS_LINE.format(obj="blocks"), MIN_FAIL_LINE.format(obj="blocks")),
+('Minimum Variables', -1, MIN_VARIABLES, MIN_PASS_LINE.format(obj="variables"), MIN_FAIL_LINE.format(obj="variables")),
+('Minimum Lists', -1, MIN_LISTS, MIN_PASS_LINE.format(obj="lists"), MIN_FAIL_LINE.format(obj="lists")),
 ('Minimum Operator Blocks', -1, MIN_OPERATORS, MIN_PASS_LINE.format(obj='operator blocks'), MIN_FAIL_LINE.format(obj='operator blocks')),
 ('Minimum Variable Blocks', -1, MIN_VARIABLES, MIN_PASS_LINE.format(obj='variable blocks'), MIN_FAIL_LINE.format(obj='variable blocks')),
 ('Minimum List Blocks', -1, MIN_LISTS, MIN_PASS_LINE.format(obj='list blocks'), MIN_FAIL_LINE.format(obj='list blocks')),

@@ -55,6 +55,7 @@ class SMTPFrontend(AbstractPlugin):
 		'header':u'Welcome to the automated sumission tool!',
 		'footer':u'Copyright 2013 Joseph Lewis III',
 		'reply_subject':u'Your Recent Submission',
+		'enabled':False
 	}
 	
 	def __init__(self):
@@ -155,6 +156,9 @@ class SMTPFrontend(AbstractPlugin):
 	
 	def task(self):
 		'''Fetches new messages, processes them, and sends back results.'''
+		if not self._config['enabled']:
+			return
+		
 		outbox = self._process_uploads()
 		self._send_results(outbox)
 		
