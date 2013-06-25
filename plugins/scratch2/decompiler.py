@@ -65,6 +65,10 @@ OPERATORS_BLOCKS = frozenset([u'%', u'&', u'*', u'+', u'-', u'/', u'<', u'=',
 CUSTOM_BLOCKS = frozenset([u'call', u'procDef'])
 
 
+# Meta categories
+USER_INTERACTION_BLOCKS = frozenset([u'whenClicked', u'whenKeyPressed', 
+u'keyPressed:', u'mousePressed', u'mouseX', u'mouseY'])
+
 
 
 
@@ -123,7 +127,6 @@ class Scratch2Project:
 		
 		# fetch hidden inner blocks like operators
 		extrablocks = []
-		extrablocks += blocks
 		
 		def lookforlists(block, extrablocks):
 			for item in block:

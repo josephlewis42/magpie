@@ -94,6 +94,7 @@ SCRATCH_TESTS = [
 ('Minimum Sensing Blocks',	blocks_gte, -1, scratch2.decompiler.SENSING_BLOCKS,	"sensing blocks"),
 ('Minimum Sound Blocks',	blocks_gte, -1, scratch2.decompiler.SOUND_BLOCKS,	"sound blocks"),
 ('Minimum Variable Blocks',	blocks_gte, -1, scratch2.decompiler.VARIABLE_BLOCKS, "variable blocks"),
+('Minimum Interaction blocks (meta category)', blocks_gte, -1, scratch2.decompiler.USER_INTERACTION_BLOCKS, "interaction blocks"),
 ('Minimum Blocks', min_blocks, -1),
 ('Minimum Costumes', min_costumes, -1),
 ('Minimum Sounds', min_sounds, -1),
