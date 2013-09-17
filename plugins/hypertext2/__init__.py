@@ -87,7 +87,7 @@ def edit_test(test_name):
 		return render_template('edit_test.html', test_name=test_name, test_value=testval, msg="", **frontend_instance._config)
 	else: # POST
 		testval = request.form['test']
-		print testval
+		print(testval)
 		newtests = json.loads(testval)
 		
 		frontend_instance._magpie.test_configurations[test_name] = newtests

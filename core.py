@@ -301,7 +301,12 @@ class Magpie:
 	def write_config(self):
 		'''Writes the configuration to a file.'''
 		# make sure we don't already have a newer configuration
-		currtime = os.path.getmtime(CONFIG_FILE_LOCATION)
+		
+		try:
+			currtime = os.path.getmtime(CONFIG_FILE_LOCATION)
+		except Exception:
+			currtime = 0
+		
 		if currtime > self.configuration_load_time:
 			self.__load_configuration()
 			return

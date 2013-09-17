@@ -39,7 +39,11 @@ import os
 
 if __name__ == "__main__":
 	# add magpie to the system path
-	sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+	ourdir = os.path.dirname(os.path.realpath(__file__))
+	print(ourdir)
+	sys.path.append(os.path.dirname(ourdir))
+	sys.path.append(os.path.join(ourdir, "lib"))
+	import werkzeug
 	
 	# import and start magpie from here
 	import magpie.core
