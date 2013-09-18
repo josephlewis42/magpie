@@ -8,13 +8,23 @@
 
 {% block content %}
 	<h1>Configuration</h1>
+	
+	<h2>Create New Upload Configuration</h2>
+	
+	<form method='post' action='/newtest'>
+	<label for='name'>Configuration Title:</label>
+	<input type='text' name='name' />
+	</br>
+	<input type='submit' value="Create!">
+	</form>
+	
+	<hr>
+	
+	<h2>Existing Configurations</h2>
+	
 	{% autoescape False %}
 		{{ config }}
 	{% endautoescape %}
 	
-<form method='post' action='/newtest'>
-<input type='text' name='name' />
-</br>
-<input type='submit' value="Create new test">
-</form>
+
 {% endblock %}
