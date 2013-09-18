@@ -6,16 +6,41 @@
 
 {% block title %}Editing Test {{ test_name }}{% endblock %}
 
+{% block header %}
+<link rel="stylesheet" href="/static/jsoneditor.css"/>
+<script src="/static/json2.js"></script>
+<script src="/static/jquery.min.js"></script>
+<script src="/static/jquery.jsoneditor.js"></script>
+
+
+{% endblock %}
+
 {% block content %}
 	<h1>Editing Test {{ test_name }}</h1>
 	{% if msg %}
 	<h2>{{ msg }}</h2>
 	{% endif %}
 	
+    <div id="editor" class="json-editor expanded"></div>
+	
 	<form method='post'>
-		<textarea name='test'>{{ test_value }}</textarea>
+		<textarea name='test' id='json'></textarea>
 		<br>
 		<br>
-		<input type='submit' value='Submit Changes' />
+		<input type='submit' value='Submit Changes' onsubmit="return updateResults();"/>
 	</form>
+	
+<script type='text/javascript'>
+	var json = {{ test_value|safe }};
+	
+	function printJSON() {
+		$('#json').val(JSON.stringify(json));
+	}
+	
+	$(document).ready(function() {
+		$('#editor').jsonEditor(json, {change:printJSON});
+		printJSON();
+	});
+	
+</script>
 {% endblock %}
