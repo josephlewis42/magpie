@@ -2,23 +2,17 @@ Magpie
 ======
 
 Magpie is an automated testing tool aimed at automated assignment submission and
-processing. 
+processing. Currently it supports grading Scratch and Scratch2 documents.
 
-Magpie natively supports the submissions from:
+It accepts submissions from both Email or HTTP so students do not need to use
+a VPN if the server hosting it is behind a firewall.
 
-* E-Mail
-* HTTP
+Installing
+----------
 
-And comes with the ability to grade Scratch files. Additional frontends and 
-backends come from Python scripts that extend the `AbstractPlugin` class and
-are placed in the plugins directory.
+The easiest way to get the software is by running the install_magpie.sh script that you can download from the scripts folder.
 
-Magpie generates and can parse tests that conform to the 
-[Test Anything Protocol](http://en.wikipedia.org/wiki/Test_Anything_Protocol).
-
-The Test Anything Protocol has modules available for most modern languages. 
-Oftentimes these modules provide a wrapper to the language's normal testing
-framework (e.g. JUnit).
+The script automatically grabs the source, removes the old version and starts the new one with default settings.
 
 Running
 -------
@@ -40,4 +34,17 @@ From here you can change:
 * the port the webserver starts on
 * ...
 
+
+Extending
+---------
+
+Magpie is easy to extend, just write your own script and plop it in the plugins
+directory.
+
+Magpie generates and can parse tests that conform to the 
+[Test Anything Protocol](http://en.wikipedia.org/wiki/Test_Anything_Protocol).
+
+The Test Anything Protocol has modules available for most modern languages. 
+Oftentimes these modules provide a wrapper to the language's normal testing
+framework (e.g. JUnit).
 
