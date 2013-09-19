@@ -34,6 +34,8 @@ From here you can change:
 * the port the webserver starts on
 * ...
 
+You can also configure tests on the fly by going to the configuratino page at: `http://hostname:8080/config`
+
 
 Extending
 ---------
