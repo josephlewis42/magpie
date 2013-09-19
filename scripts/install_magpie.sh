@@ -7,4 +7,4 @@ rm -rf magpie
 git clone https://github.com/joehms22/magpie.git
 cd magpie/magpie/
 chmod +x linux_daemon.sh
-./linux_deamon.sh &
+./linux_daemon.sh &
