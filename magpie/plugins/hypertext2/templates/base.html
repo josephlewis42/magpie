@@ -20,10 +20,18 @@
 			color:#fff;
 			padding:1em;
 		}
+		
+		#logo
+		{
+			vertical-align:middle;
+			width:100px;
+			margin-left:-50px;
+		}
 	</style>
 	{% block header %}{% endblock %}
 </head>
 <body>
+	<h1><img id='logo' src="/static/magpie.png"></img>{% block pagetitle %}{% endblock %}</h1>
 	{% if message_of_the_day %}
 		<div class='motd'><p>{{ message_of_the_day }}</p></div>
 	{% endif %}

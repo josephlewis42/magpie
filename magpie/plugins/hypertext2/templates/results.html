@@ -13,9 +13,10 @@ tr:nth-child(1){color:#0070BF;font-size:1.2em}
 
 {% block title %}Results{% endblock %}
 
-{% block content %}
-	<h1>{{ title }} Results</h1>
+{% block pagetitle %}Magpie Results{% endblock %}
 
+
+{% block content %}
 	{% autoescape False %}
 		<p>{{ results_header }}</p>
 		{{ document.to_html() }}
