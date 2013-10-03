@@ -79,7 +79,6 @@ class Magpie:
 	test_configurations = None
 	magpie_configuration = None
 	plugin_configuration = None
-	configuration_load_time = 0.0 # time the config file was last loaded.
 
 	def __init__(self):
 		''' Sets up the core of the program.
@@ -138,7 +137,7 @@ class Magpie:
 		try:
 			with open(CONFIG_FILE_LOCATION) as config:
 				cfg = json.load(config)
-			self.configuration_load_time = os.path.getmtime(CONFIG_FILE_LOCATION)
+
 		except IOError:
 			pass
 		except ValueError: # on JSON parse error
@@ -239,6 +238,7 @@ class Magpie:
 		
 		return identifier.split("|",1)
 	
+	@log_results
 	def upgrade_test_configurations(self):
 		'''Upgrades all of the test configurations in the project.'''
 		new_configurations = {}
@@ -260,6 +260,7 @@ class Magpie:
 		
 		self.test_configurations = new_configurations
 	
+	@log_results
 	def submit_document(self, document, configuration_type):
 		''' Processes an uploaded document.
 		'''
@@ -300,16 +301,6 @@ class Magpie:
 	@log_results
 	def write_config(self):
 		'''Writes the configuration to a file.'''
-		# make sure we don't already have a newer configuration
-		
-		try:
-			currtime = os.path.getmtime(CONFIG_FILE_LOCATION)
-		except Exception:
-			currtime = 0
-		
-		if currtime > self.configuration_load_time:
-			self.__load_configuration()
-			return
 		
 		cfg = {
 			'tests':self.test_configurations,
@@ -324,7 +315,6 @@ class Magpie:
 		with open(CONFIG_FILE_LOCATION, 'w') as output:
 			json.dump(cfg, output, sort_keys=True, indent=4, separators=(',', ': '))
 		
-		self.configuration_load_time = os.path.getmtime(CONFIG_FILE_LOCATION)
 	
 	@log_results
 	def shutdown(self):
